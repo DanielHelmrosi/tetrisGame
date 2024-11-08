@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tetris</title>
+    <style>
+        #game {
+            display: grid;
+            grid-template-columns: repeat(10, 30px);
+            grid-template-rows: repeat(20, 30px);
+            gap: 1px;
+            background-color: black;
+            max-width: 310px;
+        }
+        .cell {
+            width: 30px;
+            height: 30px;
+            background-color: transparent;
+        }
+        .filled {
+            width: 30px;
+            height: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game"></div>
+<button id="start">Start Game</button>
+<audio id="gameMusic" src="inspectionProfiles/8%20bit%20-%20Музыка%20из%20тетриса.mp3" preload="auto" loop></audio>
+<audio id="gameOver" src="inspectionProfiles/Tetris%20&%20Dr.%20Mario%20-%20Tetris%20Game%20Over.mp3" preload="auto"></audio>
+
+
+<script>
+    const gameContainer = document.getElementById('game');
+    const startButton = document.getElementById('start');
+    const gameMusic = document.getElementById('gameMusic');
+    const gameOver = document.getElementById('gameOver');
+    const rows = 20;
+    const cols = 10;
+    const colors = ['red'];
+    let grid = Array.from({ length: rows }, () => Array(cols).fill(0));
+    let currentColumn;
+    let timer;
+    let currentRow;
+    let dropSpeed = 1000;
+
+    function createGrid() {
+        gameContainer.innerHTML = '';
+        grid.forEach(row => {
+            row.forEach(cell => {
+                const cellDiv = document.createElement('div');
+                cellDiv.classList.add('cell');
+                if (cell === 1) {
+                    cellDiv.classList.add('filled');
+                    cellDiv.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                }
+                gameContainer.appendChild(cellDiv);
+            });
+        });
+    }
+
+    function addBlock() {
+        currentColumn = Math.floor(cols / 2);
+        currentRow = 0;
+        if (grid[currentRow][currentColumn] === 0) {
+            grid[currentRow][currentColumn] = 1;
+        } else {
+            clearInterval(timer);
+            gameMusic.pause();
+            alert("Game Over!");
+            gameOver.play();
+        }
+    }
+
+    function checkForCompleteLines() {
+        for (let row = 0; row < rows; row++) {
+            if (grid[row].every(cell => cell === 1)) {
+                grid.splice(row, 1);
+                grid.unshift(Array(cols).fill(0));
+            }
+        }
+    }
+
+    function moveDown() {
+        if (currentRow < rows - 1) {
+            if (grid[currentRow + 1][currentColumn] === 0) {
+                grid[currentRow][currentColumn] = 0;
+                currentRow++;
+                grid[currentRow][currentColumn] = 1;
+            } else {
+                checkForCompleteLines();
+                addBlock();
+            }
+        } else {
+            checkForCompleteLines();
+            addBlock();
+        }
+        createGrid();
+    }
+
+    function moveLeft() {
+        if (currentColumn > 0 && grid[currentRow][currentColumn - 1] === 0) {
+            grid[currentRow][currentColumn] = 0;
+            currentColumn--;
+            grid[currentRow][currentColumn] = 1;
+            createGrid();
+        }
+    }
+
+    function moveRight() {
+        if (currentColumn < cols - 1 && grid[currentRow][currentColumn + 1] === 0) {
+            grid[currentRow][currentColumn] = 0;
+            currentColumn++;
+            grid[currentRow][currentColumn] = 1;
+            createGrid();
+        }
+    }
+
+    function moveDownFast() {
+        dropSpeed = 100;
+        clearInterval(timer);
+        timer = setInterval(moveDown, dropSpeed);
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.code === 'Space') {
+            addBlock();
+            createGrid();
+        }
+        if (event.code === 'ArrowLeft') {
+            moveLeft();
+        }
+        if (event.code === 'ArrowRight') {
+            moveRight();
+        }
+        if (event.code === 'ArrowDown') {
+            moveDownFast();
+        }
+    });
+
+    startButton.addEventListener('click', () => {
+        grid = Array.from({ length: rows }, () => Array(cols).fill(0));
+        clearInterval(timer);
+        dropSpeed = 1000;
+        createGrid();
+        addBlock();
+        timer = setInterval(moveDown, dropSpeed);
+        gameMusic.currentTime = 0;
+        gameMusic.play();
+    });
+
+    createGrid();
+</script>
+
+</body>
+</html>
